@@ -1,0 +1,44 @@
+{
+  "name": "github-city-frontend",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "@react-spring/three": "9.7.5",
+    "@react-three/drei": "9.122.0",
+    "@react-three/fiber": "8.18.0",
+    "@types/node": "^16.18.23",
+    "@types/react": "^18.0.31",
+    "@types/react-dom": "^18.0.11",
+    "@types/three": "0.170.0",
+    "axios": "^1.3.4",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.10.0",
+    "react-scripts": "5.0.1",
+    "three": "0.170.0",
+    "typescript": "^4.9.5"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "proxy": "http://localhost:3001"
+}
+

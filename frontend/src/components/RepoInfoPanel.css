@@ -1,0 +1,89 @@
+.repo-panel {
+  position: absolute;
+  top: 1.25rem;
+  right: 1.25rem;
+  width: min(360px, calc(100vw - 2rem));
+  padding: 1.2rem;
+  z-index: 10;
+}
+
+.repo-panel h2 {
+  margin: 0.35rem 0 0.7rem;
+  font-size: 1.7rem;
+  overflow-wrap: break-word;
+}
+
+.repo-panel ul {
+  list-style: none;
+  padding: 0;
+  margin: 1rem 0 1.1rem;
+}
+
+.repo-panel li {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.85rem;
+  padding-bottom: 0.85rem;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.14);
+  font-size: 0.95rem;
+}
+
+.repo-panel .close-btn {
+  position: absolute;
+  top: 0.9rem;
+  right: 0.9rem;
+  background: none;
+  border: none;
+  color: inherit;
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+
+.panel-description {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.repo-tags {
+  display: flex;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+  margin-top: 0.9rem;
+}
+
+.repo-tags span {
+  padding: 0.45rem 0.7rem;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.12);
+  color: inherit;
+  font-size: 0.82rem;
+}
+
+.repo-panel .github-btn {
+  width: 100%;
+  padding: 0.95rem 1rem;
+  font-size: 1rem;
+  background: linear-gradient(135deg, #6ee7f9, #34d399);
+  color: #03111d;
+  border: none;
+  border-radius: 16px;
+  cursor: pointer;
+  text-align: center;
+  font-weight: bold;
+}
+
+.repo-panel .github-btn:hover {
+  filter: brightness(1.05);
+}
+
+@media (max-width: 900px) {
+  .repo-panel {
+    position: fixed;
+    left: 0.8rem;
+    right: 0.8rem;
+    top: auto;
+    bottom: 0.8rem;
+    width: auto;
+  }
+}
