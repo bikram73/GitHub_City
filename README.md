@@ -130,5 +130,3 @@ vercel --prod
 cd frontend
 npm run build
 ```
-
-Build currently succeeds. A non-blocking warning may appear from `@mediapipe/tasks-vision` source maps.
