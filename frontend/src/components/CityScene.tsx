@@ -6,10 +6,11 @@ import { Repo } from '../pages/CityView';
 interface CitySceneProps {
   repos: Repo[];
   onSelectRepo: (repo: Repo) => void;
+  onOpenRepo: (repo: Repo) => void;
   theme: 'day' | 'night';
 }
 
-const CityScene: React.FC<CitySceneProps> = ({ repos, onSelectRepo, theme }) => {
+const CityScene: React.FC<CitySceneProps> = ({ repos, onSelectRepo, onOpenRepo, theme }) => {
   const grid_size = Math.ceil(Math.sqrt(repos.length));
   const spacing = 20;
   const groundSize = Math.max(160, grid_size * spacing);
@@ -57,6 +58,7 @@ const CityScene: React.FC<CitySceneProps> = ({ repos, onSelectRepo, theme }) => 
               index={index}
               theme={theme}
               onSelect={() => onSelectRepo(repo)}
+              onOpenRepo={() => onOpenRepo(repo)}
             />
           );
         })}

@@ -8,6 +8,7 @@ interface BuildingProps {
   repo: Repo;
   position: [number, number, number];
   onSelect: () => void;
+  onOpenRepo: () => void;
   index: number;
   theme: 'day' | 'night';
 }
@@ -37,7 +38,7 @@ const getLanguageColor = (language: string | null) => {
   return languageColors.default;
 };
 
-const Building: React.FC<BuildingProps> = ({ repo, position, onSelect, index, theme }) => {
+const Building: React.FC<BuildingProps> = ({ repo, position, onSelect, onOpenRepo, index, theme }) => {
   const [hovered, setHovered] = useState(false);
   const pulseRef = useRef<THREE.Mesh<THREE.SphereGeometry, THREE.MeshStandardMaterial>>(null);
 
@@ -96,7 +97,10 @@ const Building: React.FC<BuildingProps> = ({ repo, position, onSelect, index, th
     >
       <mesh
         position={buildingPosition}
-        onClick={onSelect}
+        onClick={() => {
+          onSelect();
+          onOpenRepo();
+        }}
         onPointerOver={() => setHovered(true)}
         onPointerOut={() => setHovered(false)}
         castShadow

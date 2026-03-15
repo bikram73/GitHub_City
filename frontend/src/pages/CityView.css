@@ -153,6 +153,11 @@
   outline: 1px solid rgba(148, 163, 184, 0.15);
 }
 
+.control-card select option {
+  color: #000;
+  background: #fff;
+}
+
 .theme-switcher {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -193,11 +198,19 @@
 }
 
 .city-stage {
+  position: relative;
   min-height: 620px;
+  height: clamp(520px, 68vh, 780px);
   border-radius: 28px;
   overflow: hidden;
   border: 1px solid var(--panel-border);
   background: rgba(2, 6, 23, 0.24);
+}
+
+.city-stage canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
 }
 
 .insights-panel {
@@ -253,6 +266,7 @@
 
   .city-stage {
     min-height: 500px;
+    height: 62vh;
   }
 }
 

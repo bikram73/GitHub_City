@@ -217,6 +217,10 @@ const CityView: React.FC = () => {
     ? 'No repositories are available for this GitHub user.'
     : `No repository activity found for ${selectedYear}. Try another year or switch back to All Time.`;
 
+  const handleOpenRepo = (repo: Repo) => {
+    window.open(repo.url, '_blank', 'noopener,noreferrer');
+  };
+
   if (loading) {
     return <div className="status-message">Generating city for {username}...</div>;
   }
@@ -297,7 +301,7 @@ const CityView: React.FC = () => {
           {repos.length ? (
             <Suspense fallback={<div className="status-message">Loading 3D assets...</div>}>
               <Canvas camera={{ position: [0, 68, 130], fov: 48 }} shadows>
-                <CityScene repos={repos} onSelectRepo={setSelectedRepo} theme={theme} />
+                <CityScene repos={repos} onSelectRepo={setSelectedRepo} onOpenRepo={handleOpenRepo} theme={theme} />
               </Canvas>
             </Suspense>
           ) : (
