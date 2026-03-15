@@ -1,5 +1,7 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef } from 'react';
 import { OrbitControls, Stars } from '@react-three/drei';
+import { useFrame } from '@react-three/fiber';
+import * as THREE from 'three';
 import Building from './Building';
 import { Repo } from '../pages/CityView';
 
@@ -11,7 +13,11 @@ interface CitySceneProps {
 }
 
 const CityScene: React.FC<CitySceneProps> = ({ repos, onSelectRepo, onOpenRepo, theme }) => {
-  const grid_size = Math.ceil(Math.sqrt(repos.length));
+  const sortedRepos = useMemo(
+    () => [...repos].sort((left, right) => right.commit_count - left.commit_count),
+    [repos],
+  );
+  const grid_size = Math.ceil(Math.sqrt(Math.max(1, sortedRepos.length)));
   const spacing = 16;
   const groundSize = Math.max(210, grid_size * spacing + 120);
   const skyColor = theme === 'night' ? '#03102a' : '#8fc5e2';
@@ -51,6 +57,23 @@ const CityScene: React.FC<CitySceneProps> = ({ repos, onSelectRepo, onOpenRepo, 
     [groundSize],
   );
 
+  const skylineColumns = Math.max(14, Math.ceil(grid_size * 1.8));
+  const skylineRows = Math.max(2, Math.ceil(sortedRepos.length / skylineColumns));
+  const celestialRef = useRef<THREE.Group>(null);
+
+  useFrame((state) => {
+    if (!celestialRef.current) {
+      return;
+    }
+
+    const t = state.clock.elapsedTime * 0.16;
+    const radius = groundSize * 0.33;
+    celestialRef.current.position.x = Math.cos(t) * radius;
+    celestialRef.current.position.y = (theme === 'day' ? 62 : 56) + Math.sin(t) * (theme === 'day' ? 8 : 6);
+    celestialRef.current.position.z = -groundSize * 0.28 + Math.sin(t * 0.55) * 7;
+    celestialRef.current.rotation.y += 0.003;
+  });
+
   return (
     <>
       <color attach="background" args={[skyColor]} />
@@ -59,6 +82,38 @@ const CityScene: React.FC<CitySceneProps> = ({ repos, onSelectRepo, onOpenRepo, 
       <directionalLight position={[110, 130, 35]} intensity={theme === 'night' ? 0.92 : 1.6} castShadow />
       <pointLight position={[70, 90, 80]} intensity={theme === 'night' ? 1.25 : 0.62} color={theme === 'night' ? '#7dd3fc' : '#ffffff'} />
       <pointLight position={[-90, 60, -80]} intensity={theme === 'night' ? 0.72 : 0.25} color={theme === 'night' ? '#67e8f9' : '#fff4ce'} />
+
+      <group ref={celestialRef}>
+        {theme === 'day' ? (
+          <>
+            <pointLight intensity={1.6} color="#ffd37a" distance={320} />
+            <mesh>
+              <sphereGeometry args={[5.1, 24, 24]} />
+              <meshStandardMaterial color="#ffd15e" emissive="#ffb938" emissiveIntensity={0.55} />
+            </mesh>
+            <mesh rotation={[Math.PI / 2.8, 0, 0]}>
+              <torusGeometry args={[7.4, 0.3, 12, 42]} />
+              <meshStandardMaterial color="#ffd68d" emissive="#ffbf55" emissiveIntensity={0.42} transparent opacity={0.86} />
+            </mesh>
+          </>
+        ) : (
+          <>
+            <pointLight intensity={0.9} color="#c8ddff" distance={280} />
+            <mesh>
+              <sphereGeometry args={[4.4, 20, 20]} />
+              <meshStandardMaterial color="#dfeaff" emissive="#8eb8ff" emissiveIntensity={0.26} />
+            </mesh>
+            <mesh position={[1.1, 0.8, 3.2]}>
+              <sphereGeometry args={[0.66, 10, 10]} />
+              <meshStandardMaterial color="#cfdcff" />
+            </mesh>
+            <mesh position={[-1.4, -0.9, 2.7]}>
+              <sphereGeometry args={[0.44, 10, 10]} />
+              <meshStandardMaterial color="#c2d4fa" />
+            </mesh>
+          </>
+        )}
+      </group>
       
       {theme === 'night' ? <Stars radius={180} depth={80} count={5000} factor={4} saturation={0} fade /> : null}
 
@@ -82,6 +137,11 @@ const CityScene: React.FC<CitySceneProps> = ({ repos, onSelectRepo, onOpenRepo, 
           <planeGeometry args={[groundSize * 0.66, groundSize * 0.16]} />
           <meshStandardMaterial color={waterColor} transparent opacity={theme === 'night' ? 0.65 : 0.82} />
         </mesh>
+
+        <mesh position={[0, 0.07, -groundSize * 0.29]} rotation={[-Math.PI / 2, 0, 0]}>
+          <planeGeometry args={[groundSize * 0.62, groundSize * 0.05]} />
+          <meshStandardMaterial color={theme === 'night' ? '#ddd6bc' : '#f0e4b9'} />
+        </mesh>
       </group>
 
       <group position={[0, 0.08, -groundSize * 0.1]}>
@@ -91,16 +151,16 @@ const CityScene: React.FC<CitySceneProps> = ({ repos, onSelectRepo, onOpenRepo, 
         </mesh>
       </group>
 
-      {Array.from({ length: grid_size + 1 }).map((_, index) => {
-        const offset = (index - grid_size / 2) * spacing;
+      {Array.from({ length: skylineColumns + 1 }).map((_, index) => {
+        const offset = (index - skylineColumns / 2) * spacing;
         return (
           <React.Fragment key={`road-${index}`}>
-            <mesh position={[offset, 0.2, -groundSize * 0.1]} rotation={[-Math.PI / 2, 0, 0]}>
-              <planeGeometry args={[2.4, groundSize * 0.28]} />
+            <mesh position={[offset * 0.64, 0.2, -groundSize * 0.1]} rotation={[-Math.PI / 2, 0, 0]}>
+              <planeGeometry args={[1.95, groundSize * 0.32]} />
               <meshStandardMaterial color={roadColor} emissive={roadColor} emissiveIntensity={theme === 'night' ? 0.16 : 0.03} transparent opacity={theme === 'night' ? 0.76 : 0.5} />
             </mesh>
-            <mesh position={[0, 0.2, offset - groundSize * 0.1]} rotation={[-Math.PI / 2, 0, Math.PI / 2]}>
-              <planeGeometry args={[2.4, groundSize * 0.74]} />
+            <mesh position={[0, 0.2, offset * 0.42 - groundSize * 0.1]} rotation={[-Math.PI / 2, 0, Math.PI / 2]}>
+              <planeGeometry args={[1.95, groundSize * 0.74]} />
               <meshStandardMaterial color={roadColor} emissive={roadColor} emissiveIntensity={theme === 'night' ? 0.16 : 0.03} transparent opacity={theme === 'night' ? 0.76 : 0.5} />
             </mesh>
           </React.Fragment>
@@ -108,9 +168,12 @@ const CityScene: React.FC<CitySceneProps> = ({ repos, onSelectRepo, onOpenRepo, 
       })}
 
       <group>
-        {repos.map((repo, index) => {
-          const x = (index % grid_size - grid_size / 2) * spacing;
-          const z = (Math.floor(index / grid_size) - grid_size / 2) * spacing - groundSize * 0.1;
+        {sortedRepos.map((repo, index) => {
+          const col = index % skylineColumns;
+          const row = Math.floor(index / skylineColumns);
+          const rankBias = 1 - index / Math.max(1, sortedRepos.length);
+          const x = (col - skylineColumns / 2) * 5.8 + rankBias * groundSize * 0.15;
+          const z = -groundSize * 0.17 + row * 5.5 - skylineRows * 0.7;
           return (
             <Building
               key={repo.id}
@@ -141,6 +204,33 @@ const CityScene: React.FC<CitySceneProps> = ({ repos, onSelectRepo, onOpenRepo, 
                 <icosahedronGeometry args={[0.34 + (index % 3) * 0.08, 0]} />
                 <meshStandardMaterial color={leafColor} />
               </mesh>
+            </group>
+          );
+        })}
+      </group>
+
+      <group>
+        {Array.from({ length: 14 }).map((_, index) => {
+          const x = -groundSize * 0.27 + index * (groundSize * 0.04);
+          const z = -groundSize * 0.29 + (index % 2) * 1.8;
+          const trunk = theme === 'night' ? '#6f5f44' : '#866548';
+          const leaf = theme === 'night' ? '#4b8d6d' : '#57a97d';
+          return (
+            <group key={`palm-${index}`} position={[x, 0.16, z]}>
+              <mesh position={[0, 1.25, 0]} rotation={[0, 0, (index % 3 - 1) * 0.08]}>
+                <cylinderGeometry args={[0.08, 0.12, 2.4, 6]} />
+                <meshStandardMaterial color={trunk} />
+              </mesh>
+              {[0, 1, 2, 3].map((leafIndex) => (
+                <mesh
+                  key={`palm-leaf-${leafIndex}`}
+                  position={[0, 2.3, 0]}
+                  rotation={[0.08, (leafIndex * Math.PI) / 2, 0.22]}
+                >
+                  <coneGeometry args={[0.16, 1.2, 5]} />
+                  <meshStandardMaterial color={leaf} />
+                </mesh>
+              ))}
             </group>
           );
         })}
@@ -197,7 +287,18 @@ const CityScene: React.FC<CitySceneProps> = ({ repos, onSelectRepo, onOpenRepo, 
         ))}
       </group>
 
-      <OrbitControls enableZoom enablePan enableRotate minDistance={50} maxDistance={220} maxPolarAngle={Math.PI / 2.1} />
+      <OrbitControls
+        enableZoom
+        enablePan
+        enableRotate
+        autoRotate
+        autoRotateSpeed={-0.7}
+        enableDamping
+        dampingFactor={0.06}
+        minDistance={50}
+        maxDistance={220}
+        maxPolarAngle={Math.PI / 2.1}
+      />
     </>
   );
 };

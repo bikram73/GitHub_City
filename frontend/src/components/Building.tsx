@@ -13,42 +13,17 @@ interface BuildingProps {
   theme: 'day' | 'night';
 }
 
-// Map languages to colors
-const languageColors: { [key: string]: string } = {
-  JavaScript: '#f1e05a',
-  TypeScript: '#2b7489',
-  Python: '#3572A5',
-  Java: '#b07219',
-  HTML: '#e34c26',
-  CSS: '#563d7c',
-  Shell: '#89e051',
-  Ruby: '#701516',
-  Go: '#00ADD8',
-  'C++': '#f34b7d',
-  C: '#555555',
-  PHP: '#4F5D95',
-  'C#': '#178600',
-  default: '#6e7a8a', // Default color for other languages
-};
-
-const getLanguageColor = (language: string | null) => {
-  if (language && languageColors[language]) {
-    return languageColors[language];
-  }
-  return languageColors.default;
-};
+const lowRisePalette = ['#9fb8d3', '#8fb3d1', '#b4c6d8', '#a8bbcc', '#93b1cc'];
 
 const Building: React.FC<BuildingProps> = ({ repo, position, onSelect, onOpenRepo, index, theme }) => {
   const [hovered, setHovered] = useState(false);
-  const pulseRef = useRef<THREE.Mesh<THREE.SphereGeometry, THREE.MeshStandardMaterial>>(null);
+  const pulseRef = useRef<THREE.Mesh<THREE.CylinderGeometry, THREE.MeshStandardMaterial>>(null);
 
-  const buildingHeight = Math.max(10, Math.log1p(repo.commit_count + 1) * 7.6);
+  const buildingHeight = Math.max(9.5, Math.log1p(repo.commit_count + 1) * 7.5);
   const buildingWidth = Math.max(4.2, Math.log1p(repo.size + 10) * 1.5);
   
-  const color = repo.archived ? '#333333' : getLanguageColor(repo.language);
-  const emissiveIntensity = Math.min(2.3, 0.25 + repo.stars / 40);
-  const glowColor = hovered ? '#f9f871' : color;
-  const edgeColor = theme === 'night' ? '#c7f3ff' : '#1a4f6d';
+  const emissiveIntensity = Math.min(1.55, 0.18 + repo.stars / 65);
+  const edgeColor = theme === 'night' ? '#d3f3ff' : '#4f7da4';
   const towerType = useMemo(() => {
     if (repo.commit_count > 120) {
       return 'skyscraper';
@@ -58,6 +33,27 @@ const Building: React.FC<BuildingProps> = ({ repo, position, onSelect, onOpenRep
     }
     return 'apartment';
   }, [repo.commit_count]);
+
+  const isRoundTower = towerType === 'skyscraper' || (towerType === 'office' && index % 2 === 0);
+  const facadeBandCount = Math.max(5, Math.floor(buildingHeight / 3.8));
+
+  const color = useMemo(() => {
+    if (repo.archived) {
+      return '#6b7280';
+    }
+
+    if (towerType === 'skyscraper') {
+      return theme === 'night' ? '#6ea0cc' : '#7fb0da';
+    }
+
+    if (towerType === 'office') {
+      return theme === 'night' ? '#638aac' : '#74a0c2';
+    }
+
+    return lowRisePalette[index % lowRisePalette.length];
+  }, [index, repo.archived, theme, towerType]);
+
+  const glowColor = hovered ? '#f9f871' : color;
 
   const springProps = useSpring({
     from: { widthScale: 1, heightScale: 0.05, hoverLift: 0, glow: color },
@@ -106,22 +102,58 @@ const Building: React.FC<BuildingProps> = ({ repo, position, onSelect, onOpenRep
         castShadow
         receiveShadow
       >
-        {towerType === 'skyscraper' ? (
-          <cylinderGeometry args={[buildingWidth * 0.48, buildingWidth * 0.58, buildingHeight, 14]} />
+        {isRoundTower ? (
+          <cylinderGeometry args={[buildingWidth * 0.46, buildingWidth * 0.56, buildingHeight, 18]} />
         ) : (
           <boxGeometry args={[buildingWidth, buildingHeight, buildingWidth]} />
         )}
         <a.meshPhysicalMaterial
           color={springProps.glow}
           emissive={glowColor}
-          emissiveIntensity={hovered ? emissiveIntensity + 0.35 : emissiveIntensity}
-          metalness={towerType === 'skyscraper' ? 0.78 : 0.52}
-          roughness={towerType === 'apartment' ? 0.36 : 0.24}
+          emissiveIntensity={hovered ? emissiveIntensity + 0.2 : emissiveIntensity}
+          metalness={towerType === 'apartment' ? 0.14 : 0.48}
+          roughness={towerType === 'apartment' ? 0.58 : 0.33}
+          clearcoat={towerType === 'apartment' ? 0.18 : 0.72}
+          clearcoatRoughness={0.25}
           transparent
-          opacity={theme === 'night' ? 0.94 : 0.9}
-          reflectivity={0.72}
+          opacity={theme === 'night' ? 0.96 : 0.93}
+          reflectivity={towerType === 'apartment' ? 0.25 : 0.72}
         />
       </mesh>
+
+      {isRoundTower
+        ? Array.from({ length: facadeBandCount }).map((_, bandIndex) => {
+            const y = -buildingHeight / 2 + (bandIndex + 1) * (buildingHeight / (facadeBandCount + 1));
+            return (
+              <mesh key={`band-${bandIndex}`} position={[0, buildingHeight / 2 + y, 0]}>
+                <torusGeometry args={[buildingWidth * 0.5, 0.05, 8, 24]} />
+                <meshStandardMaterial
+                  color={theme === 'night' ? '#c9e3ff' : '#9ec7eb'}
+                  emissive={theme === 'night' ? '#8ab9e4' : '#7daedb'}
+                  emissiveIntensity={theme === 'night' ? 0.2 : 0.05}
+                />
+              </mesh>
+            );
+          })
+        : null}
+
+      {towerType !== 'apartment' ? (
+        <mesh position={[0, buildingHeight + 0.7, 0]}>
+          <cylinderGeometry args={[buildingWidth * 0.34, buildingWidth * 0.4, 1, 12]} />
+          <meshStandardMaterial color={theme === 'night' ? '#9eb9d2' : '#d6e4ef'} />
+        </mesh>
+      ) : (
+        <>
+          <mesh position={[0, buildingHeight + 0.55, 0]}>
+            <boxGeometry args={[buildingWidth * 0.72, 0.8, buildingWidth * 0.72]} />
+            <meshStandardMaterial color={theme === 'night' ? '#72879b' : '#9cb0c4'} />
+          </mesh>
+          <mesh position={[0, buildingHeight + 1.25, 0]}>
+            <boxGeometry args={[buildingWidth * 0.42, 0.55, buildingWidth * 0.42]} />
+            <meshStandardMaterial color={theme === 'night' ? '#5f7488' : '#8ca0b4'} />
+          </mesh>
+        </>
+      )}
 
       <mesh position={[0, buildingHeight + 1.8, 0]} ref={pulseRef}>
         <cylinderGeometry args={[Math.max(0.3, buildingWidth * 0.08), Math.max(0.45, buildingWidth * 0.12), 1.4, 10]} />
