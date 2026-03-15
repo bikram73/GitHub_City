@@ -13,7 +13,7 @@ interface BuildingProps {
   theme: 'day' | 'night';
 }
 
-const lowRisePalette = ['#9fb8d3', '#8fb3d1', '#b4c6d8', '#a8bbcc', '#93b1cc'];
+const lowRisePalette = ['#9ac2e8', '#cf6464', '#d7d46f', '#90cf95', '#9eb8d6', '#7bb0de'];
 
 const Building: React.FC<BuildingProps> = ({ repo, position, onSelect, onOpenRepo, index, theme }) => {
   const [hovered, setHovered] = useState(false);
@@ -22,7 +22,7 @@ const Building: React.FC<BuildingProps> = ({ repo, position, onSelect, onOpenRep
   const buildingHeight = Math.max(9.5, Math.log1p(repo.commit_count + 1) * 7.5);
   const buildingWidth = Math.max(4.2, Math.log1p(repo.size + 10) * 1.5);
   
-  const emissiveIntensity = Math.min(1.55, 0.18 + repo.stars / 65);
+  const emissiveIntensity = Math.min(0.68, 0.08 + repo.stars / 150);
   const edgeColor = theme === 'night' ? '#d3f3ff' : '#4f7da4';
   const towerType = useMemo(() => {
     if (repo.commit_count > 120) {
@@ -36,6 +36,7 @@ const Building: React.FC<BuildingProps> = ({ repo, position, onSelect, onOpenRep
 
   const isRoundTower = towerType === 'skyscraper' || (towerType === 'office' && index % 2 === 0);
   const facadeBandCount = Math.max(5, Math.floor(buildingHeight / 3.8));
+  const floorBandCount = Math.max(4, Math.floor(buildingHeight / 2.8));
 
   const color = useMemo(() => {
     if (repo.archived) {
@@ -43,11 +44,11 @@ const Building: React.FC<BuildingProps> = ({ repo, position, onSelect, onOpenRep
     }
 
     if (towerType === 'skyscraper') {
-      return theme === 'night' ? '#6ea0cc' : '#7fb0da';
+      return theme === 'night' ? '#6c9ec9' : '#80b5e4';
     }
 
     if (towerType === 'office') {
-      return theme === 'night' ? '#638aac' : '#74a0c2';
+      return theme === 'night' ? '#6f9cc0' : '#7db0d8';
     }
 
     return lowRisePalette[index % lowRisePalette.length];
@@ -110,13 +111,13 @@ const Building: React.FC<BuildingProps> = ({ repo, position, onSelect, onOpenRep
         <a.meshPhysicalMaterial
           color={springProps.glow}
           emissive={glowColor}
-          emissiveIntensity={hovered ? emissiveIntensity + 0.2 : emissiveIntensity}
+          emissiveIntensity={hovered ? emissiveIntensity + 0.1 : emissiveIntensity}
           metalness={towerType === 'apartment' ? 0.14 : 0.48}
           roughness={towerType === 'apartment' ? 0.58 : 0.33}
           clearcoat={towerType === 'apartment' ? 0.18 : 0.72}
           clearcoatRoughness={0.25}
           transparent
-          opacity={theme === 'night' ? 0.96 : 0.93}
+          opacity={theme === 'night' ? 0.96 : 0.95}
           reflectivity={towerType === 'apartment' ? 0.25 : 0.72}
         />
       </mesh>
@@ -130,7 +131,23 @@ const Building: React.FC<BuildingProps> = ({ repo, position, onSelect, onOpenRep
                 <meshStandardMaterial
                   color={theme === 'night' ? '#c9e3ff' : '#9ec7eb'}
                   emissive={theme === 'night' ? '#8ab9e4' : '#7daedb'}
-                  emissiveIntensity={theme === 'night' ? 0.2 : 0.05}
+                  emissiveIntensity={theme === 'night' ? 0.16 : 0.03}
+                />
+              </mesh>
+            );
+          })
+        : null}
+
+      {!isRoundTower
+        ? Array.from({ length: floorBandCount }).map((_, floorIndex) => {
+            const y = -buildingHeight / 2 + (floorIndex + 1) * (buildingHeight / (floorBandCount + 1));
+            return (
+              <mesh key={`window-band-${floorIndex}`} position={[0, buildingHeight / 2 + y, 0]}>
+                <boxGeometry args={[buildingWidth * 0.94, 0.08, buildingWidth * 1.02]} />
+                <meshStandardMaterial
+                  color={theme === 'night' ? '#b9d6ef' : '#d4e5f5'}
+                  emissive={theme === 'night' ? '#9bc4e8' : '#b4cde6'}
+                  emissiveIntensity={theme === 'night' ? 0.22 : 0.04}
                 />
               </mesh>
             );
@@ -157,7 +174,7 @@ const Building: React.FC<BuildingProps> = ({ repo, position, onSelect, onOpenRep
 
       <mesh position={[0, buildingHeight + 1.8, 0]} ref={pulseRef}>
         <cylinderGeometry args={[Math.max(0.3, buildingWidth * 0.08), Math.max(0.45, buildingWidth * 0.12), 1.4, 10]} />
-        <meshStandardMaterial color={theme === 'night' ? '#9bf6ff' : '#0b7285'} emissive={theme === 'night' ? '#9bf6ff' : '#0b7285'} emissiveIntensity={0.3} />
+        <meshStandardMaterial color={theme === 'night' ? '#c3deff' : '#6fa1cf'} emissive={theme === 'night' ? '#a7ccf5' : '#87b4df'} emissiveIntensity={theme === 'night' ? 0.24 : 0.08} />
       </mesh>
 
       <lineSegments position={buildingPosition}>

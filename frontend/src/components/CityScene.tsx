@@ -40,10 +40,10 @@ const CityScene: React.FC<CitySceneProps> = ({ repos, onSelectRepo, onOpenRepo, 
   );
 
   const turbinePositions = useMemo(
-    () => Array.from({ length: 6 }).map((_, index) => ({
-      x: -groundSize * 0.36 + index * (groundSize * 0.09),
-      z: groundSize * 0.24 - (index % 2) * 12,
-      s: 0.9 + (index % 3) * 0.12,
+    () => Array.from({ length: 5 }).map((_, index) => ({
+      x: -groundSize * 0.08 + index * (groundSize * 0.1),
+      z: groundSize * 0.24 + (index % 2) * 5,
+      s: 1 + (index % 3) * 0.09,
     })),
     [groundSize],
   );
@@ -57,7 +57,25 @@ const CityScene: React.FC<CitySceneProps> = ({ repos, onSelectRepo, onOpenRepo, 
     [groundSize],
   );
 
-  const skylineColumns = Math.max(14, Math.ceil(grid_size * 1.8));
+  const boatPositions = useMemo(
+    () => [
+      { x: -groundSize * 0.34, z: -groundSize * 0.42, s: 1.05, r: 0.22 },
+      { x: groundSize * 0.11, z: -groundSize * 0.45, s: 1.28, r: -0.17 },
+      { x: groundSize * 0.18, z: -groundSize * 0.41, s: 0.85, r: 0.1 },
+    ],
+    [groundSize],
+  );
+
+  const beachProps = useMemo(
+    () => Array.from({ length: 16 }).map((_, index) => ({
+      x: -groundSize * 0.29 + index * (groundSize * 0.036),
+      z: -groundSize * 0.31 + (index % 3) * 0.9,
+      hue: index % 4,
+    })),
+    [groundSize],
+  );
+
+  const skylineColumns = Math.max(18, Math.ceil(grid_size * 2.1));
   const skylineRows = Math.max(2, Math.ceil(sortedRepos.length / skylineColumns));
   const celestialRef = useRef<THREE.Group>(null);
 
@@ -144,6 +162,25 @@ const CityScene: React.FC<CitySceneProps> = ({ repos, onSelectRepo, onOpenRepo, 
         </mesh>
       </group>
 
+      <group>
+        {boatPositions.map((boat, index) => (
+          <group key={`boat-${index}`} position={[boat.x, 0.22, boat.z]} scale={boat.s} rotation={[0, boat.r, 0]}>
+            <mesh position={[0, 0, 0]}>
+              <boxGeometry args={[2.3, 0.26, 0.9]} />
+              <meshStandardMaterial color={theme === 'night' ? '#47566b' : '#6f7d8d'} />
+            </mesh>
+            <mesh position={[0.2, 0.24, 0]}>
+              <boxGeometry args={[1.2, 0.18, 0.62]} />
+              <meshStandardMaterial color={theme === 'night' ? '#8da3ba' : '#c7d6e7'} />
+            </mesh>
+            <mesh position={[0.78, 0.28, 0]}>
+              <boxGeometry args={[0.34, 0.1, 0.25]} />
+              <meshStandardMaterial color={index % 2 === 0 ? '#f7d04f' : '#f97373'} />
+            </mesh>
+          </group>
+        ))}
+      </group>
+
       <group position={[0, 0.08, -groundSize * 0.1]}>
         <mesh rotation={[-Math.PI / 2, 0, 0]}>
           <planeGeometry args={[groundSize * 0.72, groundSize * 0.28]} />
@@ -172,8 +209,11 @@ const CityScene: React.FC<CitySceneProps> = ({ repos, onSelectRepo, onOpenRepo, 
           const col = index % skylineColumns;
           const row = Math.floor(index / skylineColumns);
           const rankBias = 1 - index / Math.max(1, sortedRepos.length);
-          const x = (col - skylineColumns / 2) * 5.8 + rankBias * groundSize * 0.15;
-          const z = -groundSize * 0.17 + row * 5.5 - skylineRows * 0.7;
+          const normalizedCol = skylineColumns > 1 ? col / (skylineColumns - 1) : 0.5;
+          const rightHeavy = Math.pow(normalizedCol, 1.85);
+          const x = (rightHeavy - 0.5) * groundSize * 0.86 + rankBias * groundSize * 0.06;
+          const zJitter = Math.sin(index * 1.37) * 0.65;
+          const z = -groundSize * 0.16 + row * 4.4 - skylineRows * 0.95 + zJitter;
           return (
             <Building
               key={repo.id}
@@ -211,8 +251,8 @@ const CityScene: React.FC<CitySceneProps> = ({ repos, onSelectRepo, onOpenRepo, 
 
       <group>
         {Array.from({ length: 14 }).map((_, index) => {
-          const x = -groundSize * 0.27 + index * (groundSize * 0.04);
-          const z = -groundSize * 0.29 + (index % 2) * 1.8;
+          const x = -groundSize * 0.28 + index * (groundSize * 0.042);
+          const z = -groundSize * 0.297 + (index % 2) * 1.5;
           const trunk = theme === 'night' ? '#6f5f44' : '#866548';
           const leaf = theme === 'night' ? '#4b8d6d' : '#57a97d';
           return (
@@ -237,8 +277,35 @@ const CityScene: React.FC<CitySceneProps> = ({ repos, onSelectRepo, onOpenRepo, 
       </group>
 
       <group>
+        {beachProps.map((item, index) => {
+          const umbrellaColors = ['#e85d75', '#7c83fd', '#f5b742', '#66bb6a'];
+          const loungerColors = ['#d4f1f9', '#ffd166', '#f28482', '#cdb4db'];
+          return (
+            <group key={`beach-item-${index}`} position={[item.x, 0.12, item.z]}>
+              <mesh position={[0, 0, 0]}>
+                <boxGeometry args={[0.9, 0.06, 0.28]} />
+                <meshStandardMaterial color={loungerColors[item.hue]} />
+              </mesh>
+              {index % 3 === 0 ? (
+                <>
+                  <mesh position={[0.55, 0.33, 0]}>
+                    <cylinderGeometry args={[0.04, 0.04, 0.66, 8]} />
+                    <meshStandardMaterial color={theme === 'night' ? '#aeb7c5' : '#fafafa'} />
+                  </mesh>
+                  <mesh position={[0.55, 0.66, 0]} rotation={[Math.PI, 0, 0]}>
+                    <coneGeometry args={[0.36, 0.3, 10]} />
+                    <meshStandardMaterial color={umbrellaColors[item.hue]} />
+                  </mesh>
+                </>
+              ) : null}
+            </group>
+          );
+        })}
+      </group>
+
+      <group>
         {turbinePositions.map((turbine, index) => (
-          <group key={`turbine-${index}`} position={[turbine.x, 0.22, turbine.z]} scale={turbine.s}>
+          <group key={`turbine-${index}`} position={[turbine.x, 0.22, turbine.z]} scale={turbine.s * 1.05}>
             <mesh position={[0, 2.5, 0]}>
               <cylinderGeometry args={[0.14, 0.18, 5.1, 8]} />
               <meshStandardMaterial color={theme === 'night' ? '#e0e9f6' : '#dde7f2'} />
@@ -258,13 +325,17 @@ const CityScene: React.FC<CitySceneProps> = ({ repos, onSelectRepo, onOpenRepo, 
       </group>
 
       <group>
-        <mesh position={[groundSize * 0.33, 3.2, groundSize * 0.27]}>
-          <coneGeometry args={[groundSize * 0.09, 10.5, 6]} />
-          <meshStandardMaterial color={theme === 'night' ? '#8d8f90' : '#a3a39d'} />
+        <mesh position={[groundSize * 0.37, 3.6, groundSize * 0.23]}>
+          <coneGeometry args={[groundSize * 0.12, 12.8, 8]} />
+          <meshStandardMaterial color={theme === 'night' ? '#7e8387' : '#9da5a8'} />
         </mesh>
-        <mesh position={[groundSize * 0.41, 4.3, groundSize * 0.3]}>
-          <coneGeometry args={[groundSize * 0.07, 12.8, 6]} />
-          <meshStandardMaterial color={theme === 'night' ? '#9ea0a2' : '#b2b3aa'} />
+        <mesh position={[groundSize * 0.37, 8.1, groundSize * 0.23]}>
+          <coneGeometry args={[groundSize * 0.05, 4.2, 8]} />
+          <meshStandardMaterial color={theme === 'night' ? '#c7d1da' : '#f4f7fa'} />
+        </mesh>
+        <mesh position={[groundSize * 0.24, 2.4, groundSize * 0.24]}>
+          <coneGeometry args={[groundSize * 0.08, 8.8, 8]} />
+          <meshStandardMaterial color={theme === 'night' ? '#8d908f' : '#b4b4aa'} />
         </mesh>
       </group>
 
