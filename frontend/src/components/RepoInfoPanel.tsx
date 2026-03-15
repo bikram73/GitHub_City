@@ -32,13 +32,13 @@ const RepoInfoPanel: React.FC<RepoInfoPanelProps> = ({ repo, onClose }) => {
       </div>
 
       <ul>
-        <li><strong>Language:</strong> {repo.language || 'N/A'}</li>
-        <li><strong>Stars:</strong> {repo.stars}</li>
-        <li><strong>Commits:</strong> {repo.commit_count}</li>
-        <li><strong>Activity Score:</strong> {repo.activity_score}</li>
-        <li><strong>Repo Size:</strong> {repo.size.toLocaleString()} KB</li>
-        <li><strong>Created:</strong> {new Date(repo.created_at).toLocaleDateString()}</li>
-        <li><strong>Last Update:</strong> {new Date(repo.last_updated).toLocaleDateString()}</li>
+        <li><strong>Language:</strong> <span>{repo.language || 'N/A'}</span></li>
+        <li><strong>Stars:</strong> <span>{repo.stars}</span></li>
+        <li><strong>Commits:</strong> <span>{repo.commit_count}</span></li>
+        <li><strong>Activity Score:</strong> <span>{repo.activity_score}</span></li>
+        <li><strong>Repo Size:</strong> <span>{repo.size.toLocaleString()} KB</span></li>
+        <li><strong>Created:</strong> <span>{new Date(repo.created_at).toLocaleDateString()}</span></li>
+        <li><strong>Last Update:</strong> <span>{new Date(repo.last_updated).toLocaleDateString()}</span></li>
       </ul>
       <a href={repo.url} target="_blank" rel="noopener noreferrer">
         <button className="github-btn">View on GitHub</button>
