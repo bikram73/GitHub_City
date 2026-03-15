@@ -185,7 +185,7 @@ const CityView: React.FC = () => {
       setSelectedRepo(null);
 
       try {
-        const response = await axios.get<CityResponse>(`/api/github/user/${username}`, {
+        const response = await axios.get<CityResponse | string>(`/api/github/user/${username}`, {
           params: { year: selectedYear },
         });
 
