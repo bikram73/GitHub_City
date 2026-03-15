@@ -42,13 +42,13 @@ const Building: React.FC<BuildingProps> = ({ repo, position, onSelect, onOpenRep
   const [hovered, setHovered] = useState(false);
   const pulseRef = useRef<THREE.Mesh<THREE.SphereGeometry, THREE.MeshStandardMaterial>>(null);
 
-  const buildingHeight = Math.max(8, Math.log1p(repo.commit_count + 1) * 7);
-  const buildingWidth = Math.max(6, Math.log1p(repo.size + 10) * 1.9);
+  const buildingHeight = Math.max(10, Math.log1p(repo.commit_count + 1) * 7.6);
+  const buildingWidth = Math.max(4.2, Math.log1p(repo.size + 10) * 1.5);
   
   const color = repo.archived ? '#333333' : getLanguageColor(repo.language);
   const emissiveIntensity = Math.min(2.3, 0.25 + repo.stars / 40);
   const glowColor = hovered ? '#f9f871' : color;
-  const edgeColor = theme === 'night' ? '#dff7ff' : '#19465b';
+  const edgeColor = theme === 'night' ? '#c7f3ff' : '#1a4f6d';
   const towerType = useMemo(() => {
     if (repo.commit_count > 120) {
       return 'skyscraper';
@@ -106,21 +106,25 @@ const Building: React.FC<BuildingProps> = ({ repo, position, onSelect, onOpenRep
         castShadow
         receiveShadow
       >
-        <boxGeometry args={[buildingWidth, buildingHeight, buildingWidth]} />
+        {towerType === 'skyscraper' ? (
+          <cylinderGeometry args={[buildingWidth * 0.48, buildingWidth * 0.58, buildingHeight, 14]} />
+        ) : (
+          <boxGeometry args={[buildingWidth, buildingHeight, buildingWidth]} />
+        )}
         <a.meshPhysicalMaterial
           color={springProps.glow}
           emissive={glowColor}
           emissiveIntensity={hovered ? emissiveIntensity + 0.35 : emissiveIntensity}
-          metalness={towerType === 'skyscraper' ? 0.85 : 0.6}
-          roughness={towerType === 'apartment' ? 0.28 : 0.18}
+          metalness={towerType === 'skyscraper' ? 0.78 : 0.52}
+          roughness={towerType === 'apartment' ? 0.36 : 0.24}
           transparent
-          opacity={theme === 'night' ? 0.92 : 0.85}
-          reflectivity={0.9}
+          opacity={theme === 'night' ? 0.94 : 0.9}
+          reflectivity={0.72}
         />
       </mesh>
 
       <mesh position={[0, buildingHeight + 1.8, 0]} ref={pulseRef}>
-        <sphereGeometry args={[Math.max(0.7, buildingWidth * 0.12), 20, 20]} />
+        <cylinderGeometry args={[Math.max(0.3, buildingWidth * 0.08), Math.max(0.45, buildingWidth * 0.12), 1.4, 10]} />
         <meshStandardMaterial color={theme === 'night' ? '#9bf6ff' : '#0b7285'} emissive={theme === 'night' ? '#9bf6ff' : '#0b7285'} emissiveIntensity={0.3} />
       </mesh>
 
