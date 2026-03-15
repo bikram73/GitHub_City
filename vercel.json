@@ -1,7 +1,13 @@
 {
   "version": 2,
   "installCommand": "cd frontend && npm install",
-  "buildCommand": "cd frontend && NODE_OPTIONS='--no-deprecation' CI=false npm run build",
+  "buildCommand": "cd frontend && npm run build",
+  "build": {
+    "env": {
+      "CI": "false",
+      "NODE_OPTIONS": "--no-deprecation"
+    }
+  },
   "outputDirectory": "frontend/build",
   "rewrites": [
     {
