@@ -61,6 +61,7 @@ interface NormalizedCityResponse {
 }
 
 type DashboardMetric = 'repos' | 'commits' | 'stars' | 'language';
+const COMMIT_BUILDING_LIMIT = 24;
 
 const summaryFallback: CitySummary = {
   totalRepos: 0,
@@ -269,7 +270,13 @@ const CityView: React.FC = () => {
     if (activeMetric === 'commits') {
       return [...repos]
         .filter((repo) => repo.commit_count > 0)
-        .sort((left, right) => right.commit_count - left.commit_count);
+        .sort((left, right) => {
+          if (right.commit_count !== left.commit_count) {
+            return right.commit_count - left.commit_count;
+          }
+          return right.stars - left.stars;
+        })
+        .slice(0, COMMIT_BUILDING_LIMIT);
     }
 
     if (activeMetric === 'stars') {
@@ -284,7 +291,12 @@ const CityView: React.FC = () => {
         .sort((left, right) => right.commit_count - left.commit_count);
     }
 
-    return [...repos].sort((left, right) => right.commit_count - left.commit_count);
+    return [...repos].sort((left, right) => {
+      if (right.size !== left.size) {
+        return right.size - left.size;
+      }
+      return right.stars - left.stars;
+    });
   }, [activeMetric, repos, summary.mostUsedLanguage]);
 
   const emptyState = displayedRepos.length
@@ -350,7 +362,7 @@ const CityView: React.FC = () => {
 
       <header className="dashboard-shell city-header">
         <div className="city-hero">
-          <div className="city-hero-copy">
+          <div className="city-hero-copy" style={{ color: theme === 'day' ? '#ffffff' : undefined }}>
             <div className="hero-kicker">GitHub City Dashboard</div>
             <h1>{title}&rsquo;s Repository Metropolis</h1>
             <p>
@@ -475,6 +487,7 @@ const CityView: React.FC = () => {
             <ul>
               <li>View mode: {activeMetricLabel}</li>
               <li>Visible buildings: {displayedRepos.length}</li>
+              <li>{activeMetric === 'commits' ? `Commit view: top ${Math.min(COMMIT_BUILDING_LIMIT, summary.activeRepos)} active repos` : 'Commit view: not active'}</li>
               <li>Active repos: {summary.activeRepos}</li>
               <li>Archived repos: {summary.archivedRepos}</li>
               <li>Period: {selectedYear === 'all' ? 'All Time' : selectedYear}</li>
