@@ -1,4 +1,4 @@
-import React, { Suspense, useEffect, useState, useRef } from 'react';
+import React, { Suspense, useEffect, useState, useRef, useMemo } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Canvas, useFrame } from '@react-three/fiber';
@@ -59,6 +59,8 @@ interface NormalizedCityResponse {
   summary: CitySummary;
   repos: Repo[];
 }
+
+type DashboardMetric = 'repos' | 'commits' | 'stars' | 'language';
 
 const summaryFallback: CitySummary = {
   totalRepos: 0,
@@ -201,6 +203,7 @@ const CityView: React.FC = () => {
     return currentTheme === 'day' ? 'day' : 'night';
   });
   const [selectedYear, setSelectedYear] = useState<string>(() => searchParams.get('year') || 'all');
+  const [activeMetric, setActiveMetric] = useState<DashboardMetric>('repos');
 
   useEffect(() => {
     setSearchInput(username || '');
@@ -215,6 +218,7 @@ const CityView: React.FC = () => {
       setLoading(true);
       setError(null);
       setSelectedRepo(null);
+      setActiveMetric('repos');
 
       try {
         const response = await axios.get<CityResponse | string>(`/api/github/user/${username}`, {
@@ -256,9 +260,57 @@ const CityView: React.FC = () => {
   }, [selectedYear, setSearchParams, theme]);
 
   const title = user?.name || user?.login || username || 'Developer';
-  const emptyState = selectedYear === 'all'
-    ? 'No repositories are available for this GitHub user.'
-    : `No repository activity found for ${selectedYear}. Try another year or switch back to All Time.`;
+
+  const displayedRepos = useMemo(() => {
+    if (!repos.length) {
+      return [];
+    }
+
+    if (activeMetric === 'commits') {
+      return [...repos]
+        .filter((repo) => repo.commit_count > 0)
+        .sort((left, right) => right.commit_count - left.commit_count);
+    }
+
+    if (activeMetric === 'stars') {
+      return [...repos]
+        .filter((repo) => repo.stars > 0)
+        .sort((left, right) => right.stars - left.stars);
+    }
+
+    if (activeMetric === 'language') {
+      return [...repos]
+        .filter((repo) => (repo.language || 'Unknown') === summary.mostUsedLanguage)
+        .sort((left, right) => right.commit_count - left.commit_count);
+    }
+
+    return [...repos].sort((left, right) => right.commit_count - left.commit_count);
+  }, [activeMetric, repos, summary.mostUsedLanguage]);
+
+  const emptyState = displayedRepos.length
+    ? ''
+    : activeMetric === 'commits'
+      ? `No repositories with commits found for ${selectedYear === 'all' ? 'all time' : selectedYear}.`
+      : activeMetric === 'stars'
+        ? 'No starred repositories found for this filter.'
+        : activeMetric === 'language'
+          ? `No repositories found for ${summary.mostUsedLanguage}.`
+          : selectedYear === 'all'
+            ? 'No repositories are available for this GitHub user.'
+            : `No repository activity found for ${selectedYear}. Try another year or switch back to All Time.`;
+
+  const activeMetricLabel = activeMetric === 'repos'
+    ? 'All Repositories'
+    : activeMetric === 'commits'
+      ? 'Commit Leaders'
+      : activeMetric === 'stars'
+        ? 'Starred Projects'
+        : `Language: ${summary.mostUsedLanguage}`;
+
+  const handleMetricSelect = (metric: DashboardMetric) => {
+    setActiveMetric(metric);
+    setSelectedRepo(null);
+  };
 
   const handleOpenRepo = (repo: Repo) => {
     window.open(repo.url, '_blank', 'noopener,noreferrer');
@@ -356,31 +408,51 @@ const CityView: React.FC = () => {
         </div>
 
         <section className="summary-grid">
-          <article className="summary-card">
+          <button
+            type="button"
+            className={`summary-card summary-button ${activeMetric === 'repos' ? 'is-active' : ''}`}
+            onClick={() => handleMetricSelect('repos')}
+            aria-pressed={activeMetric === 'repos'}
+          >
             <span>Total Repositories</span>
             <strong>{summary.totalRepos}</strong>
-          </article>
-          <article className="summary-card">
+          </button>
+          <button
+            type="button"
+            className={`summary-card summary-button ${activeMetric === 'commits' ? 'is-active' : ''}`}
+            onClick={() => handleMetricSelect('commits')}
+            aria-pressed={activeMetric === 'commits'}
+          >
             <span>Total Commits</span>
             <strong>{summary.totalCommits.toLocaleString()}</strong>
-          </article>
-          <article className="summary-card">
+          </button>
+          <button
+            type="button"
+            className={`summary-card summary-button ${activeMetric === 'stars' ? 'is-active' : ''}`}
+            onClick={() => handleMetricSelect('stars')}
+            aria-pressed={activeMetric === 'stars'}
+          >
             <span>Total Stars</span>
             <strong>{summary.totalStars.toLocaleString()}</strong>
-          </article>
-          <article className="summary-card">
+          </button>
+          <button
+            type="button"
+            className={`summary-card summary-button ${activeMetric === 'language' ? 'is-active' : ''}`}
+            onClick={() => handleMetricSelect('language')}
+            aria-pressed={activeMetric === 'language'}
+          >
             <span>Most Used Language</span>
             <strong>{summary.mostUsedLanguage}</strong>
-          </article>
+          </button>
         </section>
       </header>
 
       <section className="city-dashboard">
         <div className="city-stage">
-          {repos.length ? (
+          {displayedRepos.length ? (
             <Suspense fallback={<div className="status-message">Loading 3D assets...</div>}>
               <Canvas camera={{ position: [0, 68, 130], fov: 48 }} shadows>
-                <CityScene repos={repos} onSelectRepo={setSelectedRepo} onOpenRepo={handleOpenRepo} theme={theme} />
+                <CityScene repos={displayedRepos} onSelectRepo={setSelectedRepo} onOpenRepo={handleOpenRepo} theme={theme} />
               </Canvas>
             </Suspense>
           ) : (
@@ -401,6 +473,8 @@ const CityView: React.FC = () => {
           <div className="insight-card">
             <span className="control-label">Stats</span>
             <ul>
+              <li>View mode: {activeMetricLabel}</li>
+              <li>Visible buildings: {displayedRepos.length}</li>
               <li>Active repos: {summary.activeRepos}</li>
               <li>Archived repos: {summary.archivedRepos}</li>
               <li>Period: {selectedYear === 'all' ? 'All Time' : selectedYear}</li>

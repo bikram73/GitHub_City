@@ -13,11 +13,8 @@ interface CitySceneProps {
 }
 
 const CityScene: React.FC<CitySceneProps> = ({ repos, onSelectRepo, onOpenRepo, theme }) => {
-  const sortedRepos = useMemo(
-    () => [...repos].sort((left, right) => right.commit_count - left.commit_count),
-    [repos],
-  );
-  const grid_size = Math.ceil(Math.sqrt(Math.max(1, sortedRepos.length)));
+  const visibleRepos = repos;
+  const grid_size = Math.ceil(Math.sqrt(Math.max(1, visibleRepos.length)));
   const spacing = 16;
   const groundSize = Math.max(210, grid_size * spacing + 120);
   const skyColor = theme === 'night' ? '#03102a' : '#8fc5e2';
@@ -76,7 +73,7 @@ const CityScene: React.FC<CitySceneProps> = ({ repos, onSelectRepo, onOpenRepo, 
   );
 
   const skylineColumns = Math.max(18, Math.ceil(grid_size * 2.1));
-  const skylineRows = Math.max(2, Math.ceil(sortedRepos.length / skylineColumns));
+  const skylineRows = Math.max(2, Math.ceil(visibleRepos.length / skylineColumns));
   const celestialRef = useRef<THREE.Group>(null);
 
   useFrame((state) => {
@@ -205,10 +202,10 @@ const CityScene: React.FC<CitySceneProps> = ({ repos, onSelectRepo, onOpenRepo, 
       })}
 
       <group>
-        {sortedRepos.map((repo, index) => {
+        {visibleRepos.map((repo, index) => {
           const col = index % skylineColumns;
           const row = Math.floor(index / skylineColumns);
-          const rankBias = 1 - index / Math.max(1, sortedRepos.length);
+          const rankBias = 1 - index / Math.max(1, visibleRepos.length);
           const normalizedCol = skylineColumns > 1 ? col / (skylineColumns - 1) : 0.5;
           const rightHeavy = Math.pow(normalizedCol, 1.85);
           const x = (rightHeavy - 0.5) * groundSize * 0.86 + rankBias * groundSize * 0.06;
