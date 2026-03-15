@@ -1,5 +1,5 @@
 import React, { Suspense, useEffect, useState } from 'react';
-import { useParams, useSearchParams } from 'react-router-dom';
+import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Canvas } from '@react-three/fiber';
 import CityScene from '../components/CityScene';
@@ -154,7 +154,9 @@ const normalizeCityResponse = (payload: unknown, fallbackYear: string): Normaliz
 
 const CityView: React.FC = () => {
   const { username } = useParams<{ username: string }>();
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const [searchInput, setSearchInput] = useState(username || '');
   const [repos, setRepos] = useState<Repo[]>([]);
   const [selectedRepo, setSelectedRepo] = useState<Repo | null>(null);
   const [user, setUser] = useState<GitHubUser | null>(null);
@@ -167,6 +169,10 @@ const CityView: React.FC = () => {
     return currentTheme === 'day' ? 'day' : 'night';
   });
   const [selectedYear, setSelectedYear] = useState<string>(() => searchParams.get('year') || 'all');
+
+  useEffect(() => {
+    setSearchInput(username || '');
+  }, [username]);
 
   useEffect(() => {
     const fetchRepos = async () => {
@@ -182,6 +188,11 @@ const CityView: React.FC = () => {
         const response = await axios.get<CityResponse>(`/api/github/user/${username}`, {
           params: { year: selectedYear },
         });
+
+        if (typeof response.data === 'string' && response.data.trim().startsWith('<')) {
+          throw new Error('API returned an HTML page. Ensure your Vercel Root Directory is set to the project root, not the frontend folder.');
+        }
+
         const normalizedResponse = normalizeCityResponse(response.data, selectedYear);
         setRepos(normalizedResponse.repos);
         setUser(normalizedResponse.user);
@@ -221,6 +232,15 @@ const CityView: React.FC = () => {
     window.open(repo.url, '_blank', 'noopener,noreferrer');
   };
 
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const targetUser = searchInput.trim();
+    if (targetUser && targetUser !== username) {
+      const queryString = searchParams.toString();
+      navigate(`/city/${targetUser}${queryString ? `?${queryString}` : ''}`);
+    }
+  };
+
   if (loading) {
     return <div className="status-message">Generating city for {username}...</div>;
   }
@@ -256,6 +276,22 @@ const CityView: React.FC = () => {
         </div>
 
         <div className="dashboard-controls">
+          <div className="control-card">
+            <span className="control-label">User</span>
+            <form onSubmit={handleSearchSubmit} style={{ display: 'flex', gap: '8px' }}>
+              <input
+                type="text"
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                placeholder="Username"
+                style={{ width: '120px', padding: '4px 8px', borderRadius: '4px', border: '1px solid rgba(150, 150, 150, 0.4)', background: 'transparent', color: 'inherit' }}
+              />
+              <button type="submit" style={{ padding: '4px 12px', borderRadius: '4px', cursor: 'pointer', background: 'rgba(150, 150, 150, 0.2)', border: 'none', color: 'inherit' }}>
+                Go
+              </button>
+            </form>
+          </div>
+
           <YearSelector value={selectedYear} years={availableYears} onChange={setSelectedYear} />
 
           <div className="control-card">
