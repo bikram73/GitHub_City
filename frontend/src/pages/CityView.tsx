@@ -497,7 +497,7 @@ const CityView: React.FC = () => {
 
       </section>
 
-      {selectedRepo ? <RepoInfoPanel repo={selectedRepo} onClose={() => setSelectedRepo(null)} /> : null}
+      {selectedRepo ? <RepoInfoPanel repo={selectedRepo} onClose={() => setSelectedRepo(null)} theme={theme} /> : null}
     </div>
   );
 };

@@ -5,6 +5,7 @@ import './RepoInfoPanel.css';
 interface RepoInfoPanelProps {
   repo: Repo;
   onClose: () => void;
+  theme: 'day' | 'night';
 }
 
 const getBuildingPersona = (repo: Repo) => {
@@ -17,10 +18,10 @@ const getBuildingPersona = (repo: Repo) => {
   return 'Dev Hub';
 };
 
-const RepoInfoPanel: React.FC<RepoInfoPanelProps> = ({ repo, onClose }) => {
+const RepoInfoPanel: React.FC<RepoInfoPanelProps> = ({ repo, onClose, theme }) => {
   return (
-    <div className="repo-panel">
-      <button className="close-btn" onClick={onClose} aria-label="Close repository details">×</button>
+    <div className="repo-panel" style={{ color: theme === 'day' ? '#ffffff' : undefined }}>
+      <button className="close-btn" onClick={onClose} aria-label="Close repository details" style={{ color: 'inherit' }}>×</button>
       <div className="panel-eyebrow">Repository Details</div>
       <h2>{repo.name}</h2>
       <p className="panel-description">{repo.description || 'No repository description provided.'}</p>
@@ -48,4 +49,3 @@ const RepoInfoPanel: React.FC<RepoInfoPanelProps> = ({ repo, onClose }) => {
 };
 
 export default RepoInfoPanel;
-
