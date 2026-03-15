@@ -1,7 +1,7 @@
-import React, { Suspense, useEffect, useState } from 'react';
+import React, { Suspense, useEffect, useState, useRef } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { Canvas } from '@react-three/fiber';
+import { Canvas, useFrame } from '@react-three/fiber';
 import CityScene from '../components/CityScene';
 import RepoInfoPanel from '../components/RepoInfoPanel';
 import YearSelector from '../components/YearSelector';
@@ -152,6 +152,38 @@ const normalizeCityResponse = (payload: unknown, fallbackYear: string): Normaliz
   };
 };
 
+const AnimatedLoader: React.FC = () => {
+  const groupRef = useRef<any>(null);
+  
+  useFrame((state) => {
+    if (groupRef.current) {
+      groupRef.current.rotation.y = state.clock.elapsedTime * 1.2;
+      const t = state.clock.elapsedTime * 3;
+      groupRef.current.children.forEach((child: any, i: number) => {
+        child.scale.y = Math.max(0.2, 1.2 + Math.sin(t + i * 1.5) * 0.8);
+        child.position.y = child.scale.y / 2; // Keep the blocks grounded at y=0 inside the group
+      });
+    }
+  });
+
+  return (
+    <group ref={groupRef} position={[0, -0.8, 0]}>
+      <mesh position={[-1.2, 0, 0]}>
+        <boxGeometry args={[0.8, 1, 0.8]} />
+        <meshStandardMaterial color="#6f9cc0" />
+      </mesh>
+      <mesh position={[0, 0, 0]}>
+        <boxGeometry args={[0.8, 1, 0.8]} />
+        <meshStandardMaterial color="#80b5e4" />
+      </mesh>
+      <mesh position={[1.2, 0, 0]}>
+        <boxGeometry args={[0.8, 1, 0.8]} />
+        <meshStandardMaterial color="#c9e3ff" />
+      </mesh>
+    </group>
+  );
+};
+
 const CityView: React.FC = () => {
   const { username } = useParams<{ username: string }>();
   const navigate = useNavigate();
@@ -242,7 +274,18 @@ const CityView: React.FC = () => {
   };
 
   if (loading) {
-    return <div className="status-message">Generating city for {username}...</div>;
+    return (
+      <div className="status-message" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', gap: '1.5rem' }}>
+        <div style={{ width: '200px', height: '200px' }}>
+          <Canvas camera={{ position: [0, 2, 6], fov: 45 }}>
+            <ambientLight intensity={0.6} />
+            <directionalLight position={[5, 10, 5]} intensity={1.5} />
+            <AnimatedLoader />
+          </Canvas>
+        </div>
+        <div style={{ fontSize: '1.1rem', fontWeight: 500, letterSpacing: '0.5px' }}>Generating city for {username}...</div>
+      </div>
+    );
   }
 
   if (error) {
